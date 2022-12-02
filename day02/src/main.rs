@@ -7,82 +7,78 @@ enum Move {
     Scissors,
 }
 
+struct Round {
+    opponent_move: Move,
+    strategy: char,
+}
+
+fn strategy_from_line(line: &str) -> Round {
+    let chars: Vec<char> = line.chars().collect();
+    Round {
+        opponent_move: match *chars.get(0).unwrap() {
+            'A' => Move::Rock,
+            'B' => Move::Paper,
+            'C' => Move::Scissors,
+            _ => panic!("Unknown move")
+        },
+        strategy: *chars.get(2).unwrap()
+    }
+}
+
 fn main() {
-    let cheat_sheet = fs::read_to_string("input/part-1.input").unwrap();
-    part1(&cheat_sheet.clone());
-    part2(&cheat_sheet.clone());
+    let contents = fs::read_to_string("input/part-1.input").unwrap();
+    let cheat_sheet: Vec<Round> = contents
+        .split("\n")
+        .map(|line| strategy_from_line(line))
+        .collect();
+
+    println!("In part 1, scored a total of {:?} points.", get_score_according_to_part_1_rules(&cheat_sheet));
+    println!("In part 2, scored a total of {:?} points.", get_score_according_to_part_2_rules(&cheat_sheet));
 }
 
-fn part1(cheat_sheet: &str) {
-    let rounds = cheat_sheet.split("\n");
-
-    let mut total_score = 0;
-    for round in rounds {
-        let mut parts = round.split(" ");
-        let opponent = parts.next().unwrap();
-        let me = parts.next().unwrap();
-
-        let opponent_move = match opponent {
-            "A" => Move::Rock,
-            "B" => Move::Paper,
-            "C" => Move::Scissors,
-            _ => panic!("Unknown move"),
-        };
-        let me_move = match me {
-            "X" => Move::Rock,
-            "Y" => Move::Paper,
-            "Z" => Move::Scissors,
-            _ => panic!("Unknown move"),
-        };
-
-        let score = score_for_game(me_move.clone(), opponent_move.clone());
-
-        println!("Opponents plays {:?}, I am told to play {:?}. Scored {:?}", opponent_move, me_move, score);
-
-        total_score += score;
-    }
-
-    println!("Scored a total of {:?} points.", total_score);
+fn get_score_according_to_part_1_rules(cheat_sheet: &Vec<Round>) -> i32 {
+    cheat_sheet
+        .iter()
+        .map(|round| {
+            let me_move = match round.strategy {
+                'X' => Move::Rock,
+                'Y' => Move::Paper,
+                'Z' => Move::Scissors,
+                _ => panic!("Unknown move")
+            };
+    
+            score_for_game(me_move.clone(), round.opponent_move.clone())
+        })
+        .sum()
 }
 
-fn part2(cheat_sheet: &str) {
-    let rounds = cheat_sheet.split("\n");
+fn get_score_according_to_part_2_rules(cheat_sheet: &Vec<Round>) -> i32 {
+    cheat_sheet
+        .iter()
+        .map(|round| {
+            let me_move = match round.strategy {
+                // We are told to lose
+                'X' => match round.opponent_move {
+                    Move::Paper => Move::Rock,
+                    Move::Rock => Move::Scissors,
+                    Move::Scissors => Move::Paper
+                },
 
-    let mut total_score = 0;
-    for round in rounds {
-        let mut parts = round.split(" ");
-        let opponent = parts.next().unwrap();
-        let me = parts.next().unwrap();
+                // We are told to play a draw
+                'Y' => round.opponent_move.clone(),
 
-        let opponent_move = match opponent {
-            "A" => Move::Rock,
-            "B" => Move::Paper,
-            "C" => Move::Scissors,
-            _ => panic!("Unknown move"),
-        };
-        let me_move = match me {
-            "X" => match opponent_move {
-                Move::Paper => Move::Rock,
-                Move::Rock => Move::Scissors,
-                Move::Scissors => Move::Paper
-            },
-            "Y" => opponent_move.clone(),
-            "Z" => match opponent_move {
-                Move::Paper => Move::Scissors,
-                Move::Rock => Move::Paper,
-                Move::Scissors => Move::Rock
-            }
-            _ => panic!("Unknown move"),
-        };
+                // We are told to lose
+                'Z' => match round.opponent_move {
+                    Move::Paper => Move::Scissors,
+                    Move::Rock => Move::Paper,
+                    Move::Scissors => Move::Rock
+                }
+                _ => panic!("Unknown move"),
+            };
 
-        let score = score_for_game(me_move.clone(), opponent_move.clone());
-
-        println!("Opponents plays {:?}, I am told to play {:?}. Scored {:?}", opponent_move, me_move, score);
-
-        total_score += score;
-    }
-
-    println!("Scored a total of {:?} points.", total_score);
+            score_for_game(me_move.clone(), round.opponent_move.clone())
+        })
+        .sum()
 }
 
 fn score_for_game(me: Move, opponent: Move) -> i32 {
@@ -109,4 +105,15 @@ fn score_for_game(me: Move, opponent: Move) -> i32 {
     };
 
     win_score + move_score
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_play_outcome(){
+        assert_eq!(7, score_for_game(Move::Rock, Move::Scissors));
+    }
 }
