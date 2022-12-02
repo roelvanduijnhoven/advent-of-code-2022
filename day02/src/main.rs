@@ -47,7 +47,7 @@ fn get_score_according_to_part_1_rules(cheat_sheet: &Vec<Round>) -> i32 {
                 _ => panic!("Unknown move")
             };
     
-            score_for_game(me_move.clone(), round.opponent_move.clone())
+            score_for_game(&me_move, &round.opponent_move)
         })
         .sum()
 }
@@ -76,24 +76,24 @@ fn get_score_according_to_part_2_rules(cheat_sheet: &Vec<Round>) -> i32 {
                 _ => panic!("Unknown move"),
             };
 
-            score_for_game(me_move.clone(), round.opponent_move.clone())
+            score_for_game(&me_move, &round.opponent_move)
         })
         .sum()
 }
 
-fn score_for_game(me: Move, opponent: Move) -> i32 {
+fn score_for_game(me: &Move, opponent: &Move) -> i32 {
     const SCORE_FOR_WINNING: i32 = 6;
     const SCORE_FOR_DRAW: i32 = 3;
     const SCORE_FOR_LOSING: i32 = 0;
 
     let win_score = match me {
-        Move::Rock if opponent == Move::Scissors => SCORE_FOR_WINNING,
-        Move::Paper if opponent == Move::Rock => SCORE_FOR_WINNING,
-        Move::Scissors if opponent == Move::Paper => SCORE_FOR_WINNING,
+        Move::Rock if opponent == &Move::Scissors => SCORE_FOR_WINNING,
+        Move::Paper if opponent == &Move::Rock => SCORE_FOR_WINNING,
+        Move::Scissors if opponent == &Move::Paper => SCORE_FOR_WINNING,
 
-        Move::Scissors if opponent == Move::Rock => SCORE_FOR_LOSING,
-        Move::Rock if opponent == Move::Paper => SCORE_FOR_LOSING,
-        Move::Paper if opponent == Move::Scissors => SCORE_FOR_LOSING,
+        Move::Scissors if opponent == &Move::Rock => SCORE_FOR_LOSING,
+        Move::Rock if opponent == &Move::Paper => SCORE_FOR_LOSING,
+        Move::Paper if opponent == &Move::Scissors => SCORE_FOR_LOSING,
 
         _ => SCORE_FOR_DRAW,
     };
