@@ -114,6 +114,6 @@ mod tests {
 
     #[test]
     fn test_play_outcome(){
-        assert_eq!(7, score_for_game(Move::Rock, Move::Scissors));
+        assert_eq!(7, score_for_game(&Move::Rock, &Move::Scissors));
     }
 }
