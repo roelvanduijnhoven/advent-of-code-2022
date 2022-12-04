@@ -42,8 +42,7 @@ fn main() {
     let results = pairs
         .iter()
         .filter(|(a, b)| assignment_contained_in(&a, &b) || assignment_contained_in(&b, &a))
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 
     println!("There are {:?} pairs where one fully overlaps the other.", results);
 
@@ -51,8 +50,7 @@ fn main() {
     let results = pairs
         .iter()
         .filter(|(a, b)| assignment_overlaps(&a, &b))
-        .collect::<Vec<_>>()
-        .len();
+        .count();
 
     println!("There are {:?} pairs where one overlaps the other.", results);    
 }
