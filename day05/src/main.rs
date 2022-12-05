@@ -66,6 +66,7 @@ struct Instruction {
     to: usize,
 }
 
+// Example would be `move 3 from 7 to 4`.
 fn create_instruction_from_string(line: &str) -> Instruction {
     let parts: Vec<_> = line.split(' ').collect();
     Instruction {
