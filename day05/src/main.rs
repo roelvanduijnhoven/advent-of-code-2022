@@ -52,6 +52,14 @@ fn apply_move(storage: &mut Storage, instruction: &Instruction) {
     }
 }
 
+fn apply_move_retain_order(storage: &mut Storage, instruction: &Instruction) {
+    for i in (0..instruction.amount).rev() {
+        let size = &storage.stacks[instruction.from].len();
+        let take = storage.stacks[instruction.from].remove(size - 1 - i);
+        storage.stacks[instruction.to].push(take);
+    }
+}
+
 struct Instruction {
     amount: usize,
     from: usize,
@@ -71,12 +79,13 @@ fn main() {
     let contents = fs::read_to_string("assets/part-1.input").unwrap();
     let parts: Vec<_> = contents.split("\n\n").collect();    
 
-    let mut storage = create_storage_from_string(parts[0]);
     let instructions: Vec<_> = parts[1]
         .split("\n")
         .map(|line| create_instruction_from_string(line))
         .collect();
 
+    // Part 1
+    let mut storage = create_storage_from_string(parts[0]);
     for instruction in instructions {
         apply_move(&mut storage, &instruction);
     }
@@ -85,5 +94,23 @@ fn main() {
         .map(|index| storage.stacks[index].last().unwrap())
         .collect();
 
-    println!("The top container of each stack formatted as a string is {:?}", result);
+    println!("If we use the CrateMover 9000, the top container of each stack formatted as a string is {:?}", result);
+
+
+    // Part 2
+    let mut storage = create_storage_from_string(parts[0]);
+    let instructions: Vec<_> = parts[1]
+        .split("\n")
+        .map(|line| create_instruction_from_string(line))
+        .collect();
+
+    for instruction in instructions {
+        apply_move_retain_order(&mut storage, &instruction);
+    }
+
+    let result: String = (0..storage.stacks.len())
+        .map(|index| storage.stacks[index].last().unwrap())
+        .collect();        
+
+    println!("If we use the CrateMover 9001, the top container of each stack formatted as a string is {:?}", result);
 }
