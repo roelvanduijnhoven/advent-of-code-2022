@@ -1,9 +1,6 @@
 use std::fs;
 
-#[derive(Debug)]
-struct Storage {
-    stacks: Vec<Vec<char>>
-}
+type Storage = Vec<Vec<char>>;
 
 // Example:
 //
@@ -14,17 +11,16 @@ struct Storage {
 //  1   2   3 
 // ```
 fn create_storage_from_string(input: &str) -> Storage {
+    let mut storage: Storage = vec![];
+    
     let lines = input.split("\n").collect::<Vec<_>>();
-
     let mut lines_in_reverse = lines.iter().rev();
 
     // Consume first line, with the digits. And use it to determine how many stacks there are.
     let header = lines_in_reverse.next();
     let number_of_stacks = (header.unwrap().chars().count() + 1) / 4;
-
-    let mut stacks: Vec<Vec<char>> = vec![];
     for _ in 0..number_of_stacks {
-        stacks.push(vec![]);
+        storage.push(vec![]);
     }
     
     // Now read stack from bottom to top.
@@ -36,28 +32,32 @@ fn create_storage_from_string(input: &str) -> Storage {
                 continue;
             }
 
-            stacks[i].push(container_letter);
+            storage[i].push(container_letter);
         }
     }
 
-    return Storage {
-        stacks: stacks,
-    };
+    return storage;
 }
 
 fn apply_move(storage: &mut Storage, instruction: &Instruction) {
     for _ in 0..instruction.amount {
-        let take = storage.stacks[instruction.from].pop().unwrap();
-        storage.stacks[instruction.to].push(take);
+        let at_top = storage[instruction.from].pop().unwrap();
+        storage[instruction.to].push(at_top);
     }
 }
 
 fn apply_move_retain_order(storage: &mut Storage, instruction: &Instruction) {
     for i in (0..instruction.amount).rev() {
-        let size = &storage.stacks[instruction.from].len();
-        let take = storage.stacks[instruction.from].remove(size - 1 - i);
-        storage.stacks[instruction.to].push(take);
+        let size = &storage[instruction.from].len();
+        let at_top = storage[instruction.from].remove(size - 1 - i);
+        storage[instruction.to].push(at_top);
     }
+}
+
+fn get_containers_at_top(storage: &Storage) -> String {
+    return (0..storage.len())
+        .map(|index| storage[index].last().unwrap_or(&' '))
+        .collect();
 }
 
 struct Instruction {
@@ -86,31 +86,17 @@ fn main() {
 
     // Part 1
     let mut storage = create_storage_from_string(parts[0]);
-    for instruction in instructions {
-        apply_move(&mut storage, &instruction);
+    for instruction in &instructions {
+        apply_move(&mut storage, instruction);
     }
 
-    let result: String = (0..storage.stacks.len())
-        .map(|index| storage.stacks[index].last().unwrap())
-        .collect();
-
-    println!("If we use the CrateMover 9000, the top container of each stack formatted as a string is {:?}", result);
-
+    println!("If we use the CrateMover 9000, the top container of each stack formatted as a string is {:?}", get_containers_at_top(&storage));
 
     // Part 2
     let mut storage = create_storage_from_string(parts[0]);
-    let instructions: Vec<_> = parts[1]
-        .split("\n")
-        .map(|line| create_instruction_from_string(line))
-        .collect();
-
-    for instruction in instructions {
-        apply_move_retain_order(&mut storage, &instruction);
+    for instruction in &instructions {
+        apply_move_retain_order(&mut storage, instruction);
     }
 
-    let result: String = (0..storage.stacks.len())
-        .map(|index| storage.stacks[index].last().unwrap())
-        .collect();        
-
-    println!("If we use the CrateMover 9001, the top container of each stack formatted as a string is {:?}", result);
+    println!("If we use the CrateMover 9001, the top container of each stack formatted as a string is {:?}", get_containers_at_top(&storage));
 }
