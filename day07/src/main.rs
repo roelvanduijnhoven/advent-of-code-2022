@@ -59,8 +59,8 @@ fn create_filesystem_from_commands(input: &str) -> Filesystem {
 }
 
 fn get_path_to_directory(path: &Vec<String>) -> String {
-    let mut directory = path.join(&"/");
-    directory.push_str("/");
+    let mut directory = "/".to_string();
+    directory.push_str(&path.join(&"/"));
     return directory;
 }
 
@@ -74,12 +74,9 @@ fn assert_directory_exists(filesystem: &mut Filesystem, path: &Vec<String>) {
 fn insert_into_dir(filesystem: &mut Filesystem, path: &Vec<String>, file_name: &str, file_size: usize) {    
     assert_directory_exists(filesystem, path);
 
-    let directory = get_path_to_directory(path);
-
-    let mut full_path = directory.clone();
+    let mut full_path = get_path_to_directory(path);
     full_path.push_str(file_name);
-
-    filesystem.files.insert(full_path.to_string(), (file_name.to_string(), file_size));
+    filesystem.files.insert(full_path, (file_name.to_string(), file_size));
 }
 
 fn find_directory_size(filesystem: &Filesystem, directory: &str) -> usize {
@@ -93,14 +90,29 @@ fn main() {
     let contents = fs::read_to_string("assets/part-1.input").unwrap();
     let filesystem = create_filesystem_from_commands(&contents);
 
-    // for directory in &filesystem.directories {
-    //     println!("Dir {} is of size {}", directory, find_directory_size(&filesystem, &directory));
-    // }
-
+    // Part 1
     let result: usize = filesystem.directories.iter()
         .map(|directory| find_directory_size(&filesystem, directory))
         .filter(|size| *size <= 100_000)
         .sum();
 
     println!("Sum of directories up to 100.000 is {:?}", result);
+
+    // Part 2
+    let filesystem_size: usize = 70_000_000;
+    let update_size: usize = 30_000_000;
+    let filesystem_in_use = find_directory_size(&filesystem, "/");
+    let space_left = filesystem_size - filesystem_in_use;
+    let space_required_for_update = update_size - space_left;
+    
+    println!("We need to clean up {},", space_required_for_update);
+
+    let mut result: Vec<usize> = filesystem.directories.iter()
+        .map(|directory| find_directory_size(&filesystem, directory))
+        .filter(|size| *size >= space_required_for_update)
+        .collect();
+
+    result.sort();
+
+    println!("the smallest directory we can remove is {} in size", result.first().unwrap());
 }
