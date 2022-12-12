@@ -68,8 +68,7 @@ fn main() {
     let input = fs::read_to_string("assets/puzzle.input").unwrap();
     let instructions = read_instructions_from_string(&input);
 
-    println!("{:?}", instructions);
-
+    // Part 1
     let mut head_x = 0;
     let mut head_y = 0;
 
@@ -77,14 +76,52 @@ fn main() {
     let mut tail_y = 0;
 
     let mut seen: HashSet<(isize, isize)> = HashSet::new();
+    seen.insert((tail_x, tail_y));
     for instruction in instructions.iter() {
         for _ in 0..instruction.amount {
-            seen.insert((tail_x, tail_y));
-
             (head_x, head_y) = move_head(head_x, head_y, &instruction.direction);
             (tail_x, tail_y) = move_tail(tail_x, tail_y, head_x, head_y);
+            
+            seen.insert((tail_x, tail_y));
         }
     }
 
     println!("Tail visited {} unique positions on grid.", seen.len());
+
+    // Part 2
+    let chain_length = 10;
+    let mut chain: Vec<(isize, isize)> = vec![];
+    for _ in 0..chain_length {
+        chain.push((0, 0));
+    }
+
+    let mut seen: HashSet<(isize, isize)> = HashSet::new();
+    seen.insert((chain[chain_length - 1].0, chain[chain_length - 1].1));
+
+    for instruction in instructions.iter() {
+        for _ in 0..instruction.amount {
+            // Apply move to first in chain
+            let mut head = chain.get_mut(0).unwrap();
+
+            let new_head = move_head(head.0, head.1, &instruction.direction);
+            head.0 = new_head.0;
+            head.1 = new_head.1;            
+
+            // Now move rest of tail
+            for i in 1..chain_length {
+                let (head_x, head_y) = chain[(i - 1) as usize];
+                let mut tail = chain.get_mut(i).unwrap();
+
+                let (new_tail_x, new_tail_y) = move_tail(tail.0, tail.1, head_x, head_y);
+                tail.0 = new_tail_x;
+                tail.1 = new_tail_y;
+            }
+
+            // Keep track of last item of chain
+            seen.insert((chain[chain_length - 1].0, chain[chain_length - 1].1));            
+        }
+    }
+
+    println!("Last item of rope visited {} unique positions on grid.", seen.len());
+
 }
