@@ -69,7 +69,6 @@ fn get_neighbors_of<'a>(heightmap: &'a Heightmap, cell: &'a Cell) -> Vec<&'a Cel
 }
 
 fn find_shortest_path_from(heightmap: &Heightmap, from_x: usize, from_y: usize) -> HashMap<&Cell, Option<&Cell>> {
-    // We are going to compute the shortest path from (from_x, from_y) to all other cells.
     let mut unexplored: Vec<&Cell> = vec![];
     let mut distances: HashMap<&Cell, Option<usize>> = HashMap::new();
     let mut parent: HashMap<&Cell, Option<&Cell>> = HashMap::new();
@@ -103,7 +102,7 @@ fn find_shortest_path_from(heightmap: &Heightmap, from_x: usize, from_y: usize) 
         unexplored.remove(position);
 
         for neighbor in get_neighbors_of(heightmap, current) {
-            let new_potential_distance = distances[current].unwrap() + 1; // TODO I bet the part 2 is going to change the weight ;) ..
+            let new_potential_distance = distances[current].unwrap() + 1;
             let replaces_best = match distances[neighbor] {
                 None => true,
                 Some(distance) => new_potential_distance < distance
@@ -117,27 +116,9 @@ fn find_shortest_path_from(heightmap: &Heightmap, from_x: usize, from_y: usize) 
     }
 
     return parent;
-
-    // // Now we backtack from (to_x, to_y) to find the path.
-    // let start = &heightmap.cells[from_y][from_x];
-    // let mut current = &heightmap.cells[to_y][to_x];
-    // let mut path: Vec<&Cell> = vec![];
-    // loop {
-    //     path.push(&current);
-    //     current = parent[current].unwrap();
-    //     if current == start {
-    //         break;
-    //     }
-    // }
-
-    // path.reverse();
-
-    // return path;
 }
 
-
 fn find_path<'a>(heightmap: &'a Heightmap, parent: &'a HashMap<&Cell, Option<&'a Cell>>, from_x: usize, from_y: usize, to_x: usize, to_y: usize) -> Option<Vec<&'a Cell>> {
-    // Now we backtack from (to_x, to_y) to find the path.
     let start = &heightmap.cells[from_y][from_x];
     let mut current = &heightmap.cells[to_y][to_x];
     let mut path: Vec<&Cell> = vec![];
@@ -156,17 +137,7 @@ fn find_path<'a>(heightmap: &'a Heightmap, parent: &'a HashMap<&Cell, Option<&'a
     return Some(path);
 }
 
-fn main() {
-    let input = fs::read_to_string("assets/puzzle.input").unwrap();
-    let (mut heightmap, start, to) = read_puzzle_input(&input);
-
-    // Part 1
-    let parents = find_shortest_path_from(&heightmap, start.x, start.y);
-    let path = find_path(&heightmap, &parents, start.x, start.y, to.x, to.y).unwrap();
-
-    println!("Found a path from ({}, {}) to ({}, {}) of length {}.", start.x, start.y, to.x, to.y, path.len());
-    println!("Path shown below:");
-
+fn print_ascii_art_path(heightmap: &Heightmap, path: Vec<&Cell>) {
     for y in 0..heightmap.height {
         for x in 0..heightmap.width {
             if path.contains(&&heightmap.cells[y][x]) {
@@ -177,6 +148,19 @@ fn main() {
         }
         println!();
     }
+}
+
+fn main() {
+    let input = fs::read_to_string("assets/puzzle.input").unwrap();
+    let (mut heightmap, start, to) = read_puzzle_input(&input);
+
+    // Part 1
+    let parents = find_shortest_path_from(&heightmap, start.x, start.y);
+    let path = find_path(&heightmap, &parents, start.x, start.y, to.x, to.y).unwrap();
+
+    println!("Found a path from ({}, {}) to ({}, {}) of length {}.", start.x, start.y, to.x, to.y, path.len());
+    println!("Path shown below:");
+    print_ascii_art_path(&heightmap, path);
 
     // Part 2
     // Let's invert the heights. Afterwards we can solve this using the shortest_path algorithm with the end as the start.
@@ -188,7 +172,7 @@ fn main() {
 
     let parents = find_shortest_path_from(&heightmap, to.x, to.y);
 
-    let mut shortest_path = None;
+    let mut shortest_path: Option<Vec<&Cell>> = None;
     for y in 0..heightmap.height {
         for x in 0..heightmap.width {
             if heightmap.cells[y][x].height != 25 {
@@ -201,14 +185,17 @@ fn main() {
             }
 
             let path = path.unwrap();
-
             shortest_path = match shortest_path {
-                Some(current) if current < path.len() => Some(current),
-                _ => Some(path.len()),
+                Some(current) if current.len() < path.len() => Some(current),
+                _ => Some(path),
             };
         }
     }    
 
+    let shortest_path = shortest_path.unwrap();
+
     println!();
-    println!("Best start location at elevation a is of length {}", shortest_path.unwrap());
+    println!("Best start location at elevation a is of length {}", shortest_path.len());
+    println!("Path shown below:");
+    print_ascii_art_path(&heightmap, shortest_path);
 }
