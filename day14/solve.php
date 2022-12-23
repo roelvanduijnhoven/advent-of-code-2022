@@ -9,10 +9,11 @@ class Point {
  * @return Point[]
  */
 function readPathFromString(string $line): array {
+    global $extraSpace;
     return array_map(
         function (string $part) {
             [$x, $y] = explode(',', $part);
-            return new Point($x, $y);
+            return new Point($x + 300, $y);
         },
         explode(' -> ', $line)
     );
@@ -22,9 +23,9 @@ function drawGrid(array $grid, int $minX, int $minY, $maxX, int $maxY) {
     $width = count($grid);
     $height = count($grid[0]);
 
-    for ($y = $minY; $y < $height; $y++) {
-        for ($x = $minX; $x < $width; $x++) {
-            if ($grid[$x][$y]) {
+    for ($y = $minY; $y < $maxY; $y++) {
+        for ($x = $minX; $x < $maxX; $x++) {
+            if ($grid[$x][$y] ?? false) {
                 echo '#';
             } else {
                 echo '.';
@@ -41,7 +42,8 @@ $paths = array_map(
     explode(PHP_EOL, $input)
 );
 
-$flowFromX = 500;
+
+$flowFromX = 500 + 300;
 $flowFromY = 0;
 
 $minX = $flowFromX;
@@ -56,14 +58,14 @@ foreach ($paths as $path) {
         $maxY = max($maxY, $point->y);
     }
 }
-$maxX += 1;
-$maxY += 1;
+
+$maxY += 3;
 // TODO We shoudl also expand minX and minY, if minX and minY are alreaydy 0
 // $minX -= 1;
 // $minY -= 1;
 
 $grid = [];
-for ($x = 0; $x <= $maxX; $x++) {
+for ($x = 0; $x <= $maxX + 300; $x++) {
     $grid[$x] = [];
     for ($y = 0; $y <= $maxY; $y++) {
         $grid[$x][$y] = false;
@@ -86,6 +88,12 @@ foreach ($paths as $path) {
         }
     }
 }
+
+for ($x = 0; $x < count($grid); $x++) {
+    $grid[$x][$maxY - 1] = true;
+}
+
+$maxY += 2;
 
 function insertSand(array &$grid, int $fromX, int $fromY): bool {
     $width = count($grid);
@@ -120,19 +128,29 @@ function insertSand(array &$grid, int $fromX, int $fromY): bool {
     return false;
 }
 
-drawGrid($grid, $minX, $minY, $maxX, $maxY);
+// drawGrid($grid, $minX, $minY, $maxX, $maxY);
 
 $dropped = 0;
 do {
-    $overflow = insertSand($grid, $flowFromX, $flowFromY);
-    if ($overflow) {
+    if ($grid[$flowFromX][$flowFromY]) {
         break;
     }
+
+    insertSand($grid, $flowFromX, $flowFromY);    
+
+    // if ($dropped % 10 === 0) {
+    //     drawGrid($grid, $minX, $minY, $maxX, $maxY);   
+    //     sleep(1);
+
+    //     echo PHP_EOL;        
+    // }
 
     $dropped++;
 
 } while(true);
 
 drawGrid($grid, $minX, $minY, $maxX, $maxY);   
+
+echo PHP_EOL;
 
 echo $dropped;
